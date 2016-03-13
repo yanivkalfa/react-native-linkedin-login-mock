@@ -15,12 +15,9 @@ import extend from 'extend';
 import LinkedinLoginApi from './util';
 import defaultStyles from './theme/style';
 
-export default class LinkedinLoginMock extends Component {
+export default class LILoginMock extends Component {
   constructor(props) {
     super(props);
-
-    // instantiating api.
-    this.LinkedinLoginApi = new LinkedinLoginApi(this.props.appDetails);
 
     this.willUnmountSoon = false;
 
@@ -35,7 +32,7 @@ export default class LinkedinLoginMock extends Component {
   }
 
   handleLogin(){
-    this.LinkedinLoginApi.login().then((data) => {
+    LinkedinLoginApi.login().then((data) => {
       if (!this.willUnmountSoon) this.setState({ credentials : data.credentials });
     }).catch((err) => {
       if (!this.willUnmountSoon) this.setState({ credentials : null });
@@ -43,7 +40,7 @@ export default class LinkedinLoginMock extends Component {
   }
 
   handleLogout(){
-    this.LinkedinLoginApi.logout().then((data) => {
+    LinkedinLoginApi.logout().then((data) => {
       if (!this.willUnmountSoon) this.setState({ credentials : null });
     }).catch((err) => {
       console.warn(err);
@@ -67,8 +64,8 @@ export default class LinkedinLoginMock extends Component {
     this.willUnmountSoon = false;
 
     const subscriptions = this.state.subscriptions;
-    Object.keys(this.LinkedinLoginApi.Events).forEach((eventType) => {
-      let sub = DeviceEventEmitter.addListener( this.LinkedinLoginApi.Events[eventType], this.invokeHandler.bind(this, eventType) );
+    Object.keys(LinkedinLoginApi.Events).forEach((eventType) => {
+      let sub = DeviceEventEmitter.addListener( LinkedinLoginApi.Events[eventType], this.invokeHandler.bind(this, eventType) );
       subscriptions.push(sub);
     });
 
@@ -88,11 +85,13 @@ export default class LinkedinLoginMock extends Component {
   }
 
   componentDidMount() {
-    this.LinkedinLoginApi.getCredentials().then((data)=>{
-      this.setState({ credentials : data.credentials });
-    }).catch((err) =>{
-      this.setState({ credentials : null });
-      console.log('Request failed: ', err);
+    LinkedinLoginApi.init(this.props.appDetails).then(() => {
+      LinkedinLoginApi.getCredentials().then((data)=>{
+        this.setState({ credentials : data.credentials });
+      }).catch((err) =>{
+        this.setState({ credentials : null });
+        console.log('Request failed: ', err);
+      });
     });
 
   }

@@ -1,40 +1,22 @@
-/*
-import promisify from 'tiny-promisify';
-import { NativeModules } from 'react-native';
-const { FBLoginManager } = NativeModules;
-
-const getCredentialsAsync = promisify(FBLoginManager.getCredentials);
-const loginWithPermissionsAsync = promisify(FBLoginManager.loginWithPermissions);
-const loginAsync = promisify(FBLoginManager.login);
-const logoutAsync = promisify(FBLoginManager.logout);
-
-export async function getFBCredentials() {
-  return await getCredentialsAsync();
-}
-
-export async function loginWithPermissions(permissions = []) {
-  return await loginWithPermissionsAsync(permissions);
-}
-
-export async function loginWithoutPermissions() {
-  return await loginAsync();
-}
-
-export async function logout() {
-  return await logoutAsync();
-}
-
-export async function login(permissions = false) {
-  return (permissions) ? await loginWithPermissions(permissions) : await loginWithoutPermissions();
-}
-*/
 import React, { Platform, DeviceEventEmitter, NativeModules } from 'react-native';
 import Promise from 'bluebird';
 import Promisify from 'tiny-promisify';
+import store from 'react-native-simple-store';
 const { LinkedinLogin } = NativeModules;
 
 
-export default class LinkedinLoginApi {
+const loginAsync = Promisify(LinkedinLogin.login);
+
+export default {
+
+  Events:  {
+    Login: 'linkedinLogin',
+    LoginError: 'linkedinLoginError',
+    RequestSucess: 'linkedinGetRequest',
+    RequestError: 'linkedinGetRequestError'
+  },
+
+  storeKey: '@liAccessToken',
 
   /**
    * Initializes the LinkedinLogin API
@@ -45,19 +27,27 @@ export default class LinkedinLoginApi {
    * @param  {Array} scopes           [description]
    * @return {object} promise         [description]
    */
-  constructor({ redirectUrl, clientId, clientSecret, state, scopes }){
+  init: async function({ redirectUrl, clientId, clientSecret, state, scopes }){
     this.redirectUrl = redirectUrl;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.state = state;
     this.scopes = scopes;
-    this.Events = {
-      Login: 'linkedinLogin',
-      LoginError: 'linkedinLoginError',
-      RequestSucess: 'linkedinGetRequest',
-      RequestError: 'linkedinGetRequestError',
-    }
-  }
+    await this.restoreToken();
+  },
+
+  saveToken: async function(token){
+    await store.save(this.storeKey, this.accessToken);
+  },
+  restoreToken: async function(){
+    this.accessToken = await store.get(this.storeKey);
+    return this.accessToken;
+  },
+  removeToken: async function(){
+    this.accessToken = null;
+    await store.delete(this.storeKey);
+  },
+
 
   /**
    * Gets the Profile image
@@ -106,7 +96,7 @@ export default class LinkedinLoginApi {
       }
 
     });
-  }
+  },
 
   /**
    * Gets the user profile
@@ -153,7 +143,7 @@ export default class LinkedinLoginApi {
       }
 
     });
-  }
+  },
 
   /**
    * Sets the Linkedin session
@@ -172,52 +162,32 @@ export default class LinkedinLoginApi {
 
 
     });
-  }
+  },
 
   /**
    *
    */
-  async getCredentials(){
+  getCredentials(){
     return true
-  }
+  },
 
   /**
    * Logs the user in
    * @return {promise} returns whether or not the user logged in successfully
    */
-  login() {
-    return new Promise(function(resolve, reject) {
+  login: async function() {
+    return await loginAsync(
+      this.clientId,
+      this.redirectUrl,
+      this.clientSecret,
+      this.state,
+      this.scopes
+    );
 
-      DeviceEventEmitter.addListener('linkedinLoginError', (error) => {
-        reject(error);
-      });
+  },
 
-      DeviceEventEmitter.addListener('linkedinLogin', (data) => {
-        this.accessToken = data.accessToken;
-        this.expiresOn = data.expiresOn;
-
-        resolve(data);
-      });
-
-      LinkedinLogin.login(
-        this.clientId,
-        this.redirectUrl,
-        this.clientSecret,
-        this.state,
-        this.scopes
-      );
-
-    });
-
-
-  }
-
-  logout() {
-    return new Promise((resolve, reject) => {
-      this.accessToken = null;
-      resolve(true);
-
-    });
+  logout: async function() {
+    this.accessToken = null;
   }
 
 }
