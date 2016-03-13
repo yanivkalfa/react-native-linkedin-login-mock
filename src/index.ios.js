@@ -103,9 +103,9 @@ export default class LILoginMock extends Component {
     const styles = this.state.styles;
 
     return (
-      <View style={styles.FBLoginMock}>
+      <View style={styles.LILoginMock}>
         <Icon.Button name="linkedin" backgroundColor="#0059b3" onPress={() => {this.onPress(); }}>
-          <Text style={[styles.FBLoginMockButtonText, this.state.credentials ? styles.FBLoginMockButtonTextLoggedIn : styles.FBLoginMockButtonTextLoggedOut]}
+          <Text style={[styles.LILoginMockButtonText, this.state.credentials ? styles.LILoginMockButtonTextLoggedIn : styles.LILoginMockButtonTextLoggedOut]}
                 numberOfLines={1}>{text}</Text>
         </Icon.Button>
       </View>
@@ -116,7 +116,7 @@ export default class LILoginMock extends Component {
       return (
         <View style={styles.container}>
           <Icon.Button name="linkedin" backgroundColor="#0059b3" onPress={() => {this.onPress(); }}>
-            <Text style={[styles.FBLoginMockButtonText, this.state.credentials ? styles.FBLoginMockButtonTextLoggedIn : styles.FBLoginMockButtonTextLoggedOut]}
+            <Text style={[styles.LILoginMockButtonText, this.state.credentials ? styles.LILoginMockButtonTextLoggedIn : styles.LILoginMockButtonTextLoggedOut]}
                   numberOfLines={1}>{text}</Text>
           </Icon.Button>
         </View>
@@ -164,8 +164,7 @@ export default class LILoginMock extends Component {
  *  }
  *
  */
-
-FBLoginMock.propTypes = {
+LILoginMock.propTypes = {
   styleOverride: PropTypes.object,
   appDetails: PropTypes.object,
   loginText: PropTypes.string,

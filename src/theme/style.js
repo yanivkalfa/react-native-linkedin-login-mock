@@ -1,17 +1,17 @@
 export default {
-  FBLoginMock: {
+  LILoginMock: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  FBLoginMockButtonContainer: {
+  LILoginMockButtonContainer: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center'
   },
-  FBLoginMockButton: {
+  LILoginMockButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -34,19 +34,19 @@ export default {
       width: 0
     }
   },
-  FBLoginMockButtonText: {
+  LILoginMockButtonText: {
     color: 'white',
     fontWeight: '600',
     fontFamily: 'Helvetica neue',
     fontSize: 14.2
   },
-  FBLoginMockButtonTextLoggedIn: {
+  LILoginMockButtonTextLoggedIn: {
     marginLeft: 5
   },
-  FBLoginMockButtonTextLoggedOut: {
+  LILoginMockButtonTextLoggedOut: {
     marginLeft: 18
   },
-  FBLoginMockLogo: {
+  LILoginMockLogo: {
     position: 'absolute',
     height: 14,
     width: 14,
