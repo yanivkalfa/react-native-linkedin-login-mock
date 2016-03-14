@@ -14,6 +14,7 @@ import extend from 'extend';
 
 import LinkedinLoginApi from './util';
 import defaultStyles from './theme/style';
+const Icon = require('react-native-vector-icons/FontAwesome');
 
 export default class LILoginMock extends Component {
   constructor(props) {
@@ -103,53 +104,19 @@ export default class LILoginMock extends Component {
     const styles = this.state.styles;
 
     return (
-      <View style={styles.LILoginMock}>
-        <Icon.Button name="linkedin" backgroundColor="#0059b3" onPress={() => {this.onPress(); }}>
+    <View style={styles.LILoginMock}>
+      <TouchableHighlight
+        style={styles.LILoginMockButtonContainer}
+        onPress={() => { this.onPress(); }}
+      >
+        <View style={styles.LILoginMockButton}>
+          <Icon name="linkedin" size={16}  color="#fff" style={styles.LILoginMockLogo}/>
           <Text style={[styles.LILoginMockButtonText, this.state.credentials ? styles.LILoginMockButtonTextLoggedIn : styles.LILoginMockButtonTextLoggedOut]}
                 numberOfLines={1}>{text}</Text>
-        </Icon.Button>
-      </View>
+        </View>
+      </TouchableHighlight>
+    </View>
     );
-
-    /*
-    if (!this.state.user) {
-      return (
-        <View style={styles.container}>
-          <Icon.Button name="linkedin" backgroundColor="#0059b3" onPress={() => {this.onPress(); }}>
-            <Text style={[styles.LILoginMockButtonText, this.state.credentials ? styles.LILoginMockButtonTextLoggedIn : styles.LILoginMockButtonTextLoggedOut]}
-                  numberOfLines={1}>{text}</Text>
-          </Icon.Button>
-        </View>
-      );
-    }
-
-
-    if (this.state.user) {
-      var lastNameComp = (this.state.user.lastName) ? <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 20}}>Welcome {this.state.user.firstName + " " + this.state.user.lastName}</Text> : <View/>;
-      var emailAddressComp = (this.state.user.emailAddress) ? <Text>Your email is: {this.state.user.emailAddress}</Text> : <View/>;
-      var imageComp = (this.state.user.images) ? <Image source={{ uri: this.state.user.images[0].toString() }} style={{ width: 100, height: 100 }} /> : <View/>;
-      var expiresOnComp = (this.state.user.expiresOn) ? <Text>Your token expires in: {this.state.user.expiresOn.toFixed()}</Text> : <View/>;
-
-      return (
-        <View style={styles.container}>
-          { lastNameComp }
-          { emailAddressComp }
-          { expiresOnComp }
-          { imageComp }
-
-          <TouchableOpacity onPress={() => {this._logout(); }}>
-            <View style={{marginTop: 50}}>
-              <Text>Log out</Text>
-            </View>
-          </TouchableOpacity>
-
-
-        </View>
-      );
-    }
-    */
-
-
   }
 }
 
