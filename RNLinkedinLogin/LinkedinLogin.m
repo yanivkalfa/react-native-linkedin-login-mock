@@ -43,30 +43,34 @@ RCT_EXPORT_MODULE();
 
 RCT_EXPORT_METHOD(getCredentials:(RCTResponseSenderBlock)callback)
 {
-    NSString *access_Token = [[ NSUserDefaults standardUserDefaults ] objectForKey:@"access_token"];
-    if (!access_Token) {
+    NSString *accessToken = [[ NSUserDefaults standardUserDefaults ] objectForKey:@"access_token"];
+    NSString *expiresOn = [NSString stringWithFormat:@"%f", [[[ NSUserDefaults standardUserDefaults ] objectForKey:@"expires_in"] doubleValue]];
+    if (!accessToken) {
         NSString *err = @"No access token was found";
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequestError"
-                                                               body:@{@"error": err}];
+                                                               body:err];
     }
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     NSString *url = @"https://api.linkedin.com/v1/people/~:(id,first-name,last-name,industry,email-address)";
     
-    NSDictionary *parameters = @{@"oauth2_access_token": access_Token, @"format": @"json"};
+    NSDictionary *parameters = @{@"oauth2_access_token": accessToken, @"format": @"json"};
     [manager POST:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"JSON: %@", responseObject);
-        callback(@[[NSNull null],responseObject]);
+        NSMutableDictionary * resp = [responseObject mutableCopy];
+        [resp setObject:accessToken forKey:@"access_token"];
+        [resp setObject:expiresOn forKey:@"expires_in"];
+        NSLog(@"JSON: %@", resp);
+        callback(@[[NSNull null],resp]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequest"
-                                                               body:responseObject];
+                                                               body:resp];
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSString *err = [NSString stringWithFormat:@"Request Error: %@", error];
+        NSString *err = [NSString stringWithFormat:@"Request Error: %@", error.description];
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequestError"
-                                                               body:@{@"error": err}];
+                                                               body:err];
     }];
 }
 
@@ -92,24 +96,24 @@ RCT_EXPORT_METHOD(login:(NSString *)clientId redirectUrl:(NSString *)redirectUrl
             
             
         }                   failure:^(NSError *error) {
-            NSString *err = [ NSString stringWithFormat:@"Quering accessToken failed %@",error ];
+            NSString *err = [ NSString stringWithFormat:@"Quering accessToken failed %@",error.description ];
             NSLog(@"%@", err);
             callback(@[err, [NSNull null]]);
             return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLoginError"
-                                                                   body:@{@"error": error.description}];
+                                                                   body:err];
         }];
     }                      cancel:^{
         NSString *err = @"Authorization was cancelled by user";
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLoginError"
-                                                               body:@{@"error": @"User canceled"}];
+                                                               body:err];
     }                     failure:^(NSError *error) {
-        NSString *err = [ NSString stringWithFormat:@"Authorization failed %@",error ];
+        NSString *err = [ NSString stringWithFormat:@"Authorization failed %@",error.description ];
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLoginError"
-                                                               body:@{@"error": error.description}];
+                                                               body:err];
     }];
     
 }
