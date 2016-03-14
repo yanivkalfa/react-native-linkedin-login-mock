@@ -79,7 +79,6 @@ export default class LILoginMock extends Component {
   }
 
   componentWillUnmount() {
-    this.LinkedinLoginApi = null;
     this.willUnmountSoon = true;
     this.state.subscriptions.forEach(this.unSubscribeEvents);
 

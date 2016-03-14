@@ -78,13 +78,22 @@ export default {
     return data;
   },
 
-  /**
-   *
-   */
+  /*
   async getCredentials(){
     if (!this.accessTokenDetails) throw new Error(NO_ACCESS_TOKEN);
     return await this.getProfile();
+  },*/
+
+  async getCredentials(){
+    if (!this.accessTokenDetails) throw new Error(NO_ACCESS_TOKEN);
+    return await new Promise((resolve,reject) => {
+      LinkedinLogin.getCredentials((err, resp) => {
+        return (err) ? reject(new Error(err)) : resolve(resp);
+      });
+    })
   },
+
+
 
   loginAsync(){
     return new Promise((resolve, reject)=>{
@@ -104,6 +113,7 @@ export default {
       return false;
     });
     if (!accessTokenDetails || !await this.saveToken(accessTokenDetails)) throw new Error(LOGIN_FAILED);
+    return await this.getCredentials();
   },
 
   logout: async function() {
