@@ -1,6 +1,6 @@
 {
   "name": "react-native-linkedin-login-mock",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "description": "React native linkedin login that allows changing the login button's style. ",
   "main": "./lib/index.ios.js",
   "scripts": {
