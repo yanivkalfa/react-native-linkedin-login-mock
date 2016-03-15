@@ -52,6 +52,33 @@ RCT_EXPORT_MODULE();
     return (!accessToken || !expiresOn) ? nil : @{@"accessToken": accessToken, @"expiresOn":expiresOn };
 }
 
+- (void) buildCredentials:(NSString *)accessToken
+                expiresOn:(NSString *)expiresOn
+                     succ:(void (^)(NSDictionary *responseObject))succ
+                     fail:(void (^)(NSError *error))fail
+{
+    if (!accessToken || !expiresOn) {
+        return fail([NSError errorWithDomain:@"world" code:5000 userInfo:@{@"Error reason": @"Missing token or expiration"}]);
+    }
+    
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    NSString *url = @"https://api.linkedin.com/v1/people/~:(id,first-name,last-name,industry,email-address)";
+    
+    NSDictionary *parameters = @{@"oauth2_access_token":accessToken, @"format": @"json"};
+    [manager GET:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *resp = @{@"accessToken":accessToken,
+                               @"ExpiresOn":expiresOn,
+                               @"email":[responseObject objectForKey:@"emailAddress"],
+                               @"firstName":[responseObject objectForKey:@"firstName"],
+                               @"lastName":[responseObject objectForKey:@"lastName"],
+                               @"id":[responseObject objectForKey:@"id"]};
+        return succ(resp);
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        return fail(error);
+    }];
+}
+
 RCT_EXPORT_METHOD(getAccessTokenAsync:(RCTResponseSenderBlock)callback)
 {
     NSDictionary *accessTokenDetails = [self buildAccessTokenDetails];
@@ -71,31 +98,22 @@ RCT_EXPORT_METHOD(getAccessTokenAsync:(RCTResponseSenderBlock)callback)
 
 RCT_EXPORT_METHOD(getCredentials:(RCTResponseSenderBlock)callback)
 {
-    NSDictionary *accessTokenDetails = [self buildAccessTokenDetails];
-    if (!accessTokenDetails) {
-        NSString *err = @"No access token was found";
+    NSString *accessToken = [[ NSUserDefaults standardUserDefaults ] objectForKey:LINKEDIN_TOKEN_KEY];
+    NSString *expiresOn = [NSString stringWithFormat:@"%f", [[[ NSUserDefaults standardUserDefaults ] objectForKey:LINKEDIN_EXPIRATION_KEY] doubleValue]];
+    if (!accessToken || !expiresOn) {
+        NSString *err = @"Missing token or expiration";
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequestError"
                                                                body:err];
     }
-    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-    NSString *url = @"https://api.linkedin.com/v1/people/~:(id,first-name,last-name,industry,email-address)";
     
-    NSDictionary *parameters = @{@"oauth2_access_token":[accessTokenDetails objectForKey:@"accessToken"], @"format": @"json"};
-    [manager GET:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSDictionary *resp = @{@"accessToken":[accessTokenDetails objectForKey:@"accessToken"],
-                               @"ExpiresOn":[accessTokenDetails objectForKey:@"expiresOn"],
-                               @"email":[responseObject objectForKey:@"emailAddress"],
-                               @"firstName":[responseObject objectForKey:@"firstName"],
-                               @"lastName":[responseObject objectForKey:@"lastName"],
-                               @"id":[responseObject objectForKey:@"id"]};
-        NSLog(@"JSON: %@", resp);
+    [self buildCredentials:accessToken expiresOn:expiresOn succ:^(NSDictionary *resp){
+        NSLog(@"%@", resp);
         callback(@[[NSNull null],resp]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequest"
                                                                body:resp];
-        
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } fail:^(NSError *error) {
         NSString *err = [NSString stringWithFormat:@"Request Error: %@", error.description];
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
@@ -149,12 +167,18 @@ RCT_EXPORT_METHOD(login:(NSString *)clientId redirectUrl:(NSString *)redirectUrl
         [self.client getAccessToken:code success:^(NSDictionary *accessTokenData) {
             NSString *accessToken = [accessTokenData objectForKey:@"access_token"];
             NSString *expiresOn = [accessTokenData objectForKey:@"expires_in"];
-            NSDictionary *body = @{@"accessToken": accessToken, @"expiresOn": expiresOn};
-            callback(@[[NSNull null], body]);
-            return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLogin"
-                                                                   body:body];
-            
-            
+            [self buildCredentials:accessToken expiresOn:expiresOn succ:^(NSDictionary *responseObject){
+                NSLog(@"%@", responseObject);
+                callback(@[[NSNull null],responseObject]);
+                return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLogin"
+                                                                       body:responseObject];
+            } fail:^(NSError *error) {
+                NSString *err = [ NSString stringWithFormat:@"Quering accessToken failed %@",error.description ];
+                NSLog(@"%@", err);
+                callback(@[err, [NSNull null]]);
+                return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLoginError"
+                                                                       body:err];
+            }];
         }                   failure:^(NSError *error) {
             NSString *err = [ NSString stringWithFormat:@"Quering accessToken failed %@",error.description ];
             NSLog(@"%@", err);

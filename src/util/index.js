@@ -18,6 +18,5 @@ const loginAsync = promisify(LinkedinLogin.login);
 
 export async function login({ clientId, redirectUrl, clientSecret, state, scopes }) {
   if (!clientId || !redirectUrl || !clientSecret || !state) throw new Error(REQUIRED_FIELD_MISSING);
-  await loginAsync( clientId, redirectUrl, clientSecret, state, scopes);
-  return await getCredentials();
+  return await loginAsync( clientId, redirectUrl, clientSecret, state, scopes);
 }
