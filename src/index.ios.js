@@ -12,7 +12,7 @@ import React, {
 
 import extend from 'extend';
 
-import LinkedinLoginApi from './util';
+import { login, logout, getCredentials, liEvents} from './util';
 import defaultStyles from './theme/style';
 const Icon = require('react-native-vector-icons/FontAwesome');
 
@@ -33,15 +33,15 @@ export default class LILoginMock extends Component {
   }
 
   handleLogin(){
-    LinkedinLoginApi.login().then((data) => {
-      if (!this.willUnmountSoon) this.setState({ credentials : data.credentials });
+    login(this.props.appDetails).then((data) => {
+      if (!this.willUnmountSoon) this.setState({ credentials : data });
     }).catch((err) => {
       if (!this.willUnmountSoon) this.setState({ credentials : null });
     })
   }
 
   handleLogout(){
-    LinkedinLoginApi.logout().then((data) => {
+    logout().then((data) => {
       if (!this.willUnmountSoon) this.setState({ credentials : null });
     }).catch((err) => {
       console.warn(err);
@@ -65,8 +65,8 @@ export default class LILoginMock extends Component {
     this.willUnmountSoon = false;
 
     const subscriptions = this.state.subscriptions;
-    Object.keys(LinkedinLoginApi.Events).forEach((eventType) => {
-      let sub = DeviceEventEmitter.addListener( LinkedinLoginApi.Events[eventType], this.invokeHandler.bind(this, eventType) );
+    Object.keys(liEvents).forEach((eventType) => {
+      let sub = DeviceEventEmitter.addListener( liEvents[eventType], this.invokeHandler.bind(this, eventType) );
       subscriptions.push(sub);
     });
 
@@ -81,19 +81,15 @@ export default class LILoginMock extends Component {
   componentWillUnmount() {
     this.willUnmountSoon = true;
     this.state.subscriptions.forEach(this.unSubscribeEvents);
-
   }
 
   componentDidMount() {
-    LinkedinLoginApi.init(this.props.appDetails).then(() => {
-      LinkedinLoginApi.getCredentials().then((data)=>{
-        this.setState({ credentials : data.credentials });
-      }).catch((err) =>{
-        this.setState({ credentials : null });
-        console.log('Request failed: ', err);
-      });
+    getCredentials().then((data)=>{
+      this.setState({ credentials : data });
+    }).catch((err) =>{
+      this.setState({ credentials : null });
+      console.log('Request failed: ', err);
     });
-
   }
 
   render() {

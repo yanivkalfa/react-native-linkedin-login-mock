@@ -28,6 +28,10 @@
 #import "LIALinkedInHttpClient.h"
 #import "AFHTTPRequestOperationManager.h"
 
+#define LINKEDIN_TOKEN_KEY          @"linkedin_token"
+#define LINKEDIN_EXPIRATION_KEY     @"linkedin_expiration"
+#define LINKEDIN_CREATION_KEY       @"linkedin_token_created_at"
+
 @implementation LinkedinLogin
 
 RCT_EXPORT_MODULE();
@@ -41,11 +45,34 @@ RCT_EXPORT_MODULE();
 @synthesize scopes = _scopes;
 
 
+- (NSDictionary *)buildAccessTokenDetails {
+    NSString *accessToken = [[ NSUserDefaults standardUserDefaults ] objectForKey:LINKEDIN_TOKEN_KEY];
+    NSString *expiresOn = [NSString stringWithFormat:@"%f", [[[ NSUserDefaults standardUserDefaults ] objectForKey:LINKEDIN_EXPIRATION_KEY] doubleValue]];
+    
+    return (!accessToken || !expiresOn) ? nil : @{@"accessToken": accessToken, @"expiresOn":expiresOn };
+}
+
+RCT_EXPORT_METHOD(getAccessTokenAsync:(RCTResponseSenderBlock)callback)
+{
+    NSDictionary *accessTokenDetails = [self buildAccessTokenDetails];
+    if (!accessTokenDetails) {
+        NSString *err = @"No access token was found";
+        NSLog(@"%@", err);
+        callback(@[err, [NSNull null]]);
+        return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequestError"
+                                                               body:err];
+        
+    }
+    NSLog(@"JSON: %@", accessTokenDetails);
+    callback(@[[NSNull null],accessTokenDetails]);
+    return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequest"
+                                                           body:accessTokenDetails];
+};
+
 RCT_EXPORT_METHOD(getCredentials:(RCTResponseSenderBlock)callback)
 {
-    NSString *accessToken = [[ NSUserDefaults standardUserDefaults ] objectForKey:@"access_token"];
-    NSString *expiresOn = [NSString stringWithFormat:@"%f", [[[ NSUserDefaults standardUserDefaults ] objectForKey:@"expires_in"] doubleValue]];
-    if (!accessToken) {
+    NSDictionary *accessTokenDetails = [self buildAccessTokenDetails];
+    if (!accessTokenDetails) {
         NSString *err = @"No access token was found";
         NSLog(@"%@", err);
         callback(@[err, [NSNull null]]);
@@ -55,15 +82,45 @@ RCT_EXPORT_METHOD(getCredentials:(RCTResponseSenderBlock)callback)
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     NSString *url = @"https://api.linkedin.com/v1/people/~:(id,first-name,last-name,industry,email-address)";
     
-    NSDictionary *parameters = @{@"oauth2_access_token": accessToken, @"format": @"json"};
-    [manager POST:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    NSDictionary *parameters = @{@"oauth2_access_token":[accessTokenDetails objectForKey:@"accessToken"], @"format": @"json"};
+    [manager GET:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSMutableDictionary * resp = [responseObject mutableCopy];
-        [resp setObject:accessToken forKey:@"access_token"];
-        [resp setObject:expiresOn forKey:@"expires_in"];
+        [resp setObject:[accessTokenDetails objectForKey:@"accessToken"] forKey:@"access_token"];
+        [resp setObject:[accessTokenDetails objectForKey:@"expiresOn"] forKey:@"expires_in"];
         NSLog(@"JSON: %@", resp);
         callback(@[[NSNull null],resp]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequest"
                                                                body:resp];
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSString *err = [NSString stringWithFormat:@"Request Error: %@", error.description];
+        NSLog(@"%@", err);
+        callback(@[err, [NSNull null]]);
+        return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequestError"
+                                                               body:err];
+    }];
+}
+
+RCT_EXPORT_METHOD(getProfileImage:(RCTResponseSenderBlock)callback)
+{
+    NSDictionary *accessTokenDetails = [self buildAccessTokenDetails];
+    if (!accessTokenDetails) {
+        NSString *err = @"No access token was found";
+        NSLog(@"%@", err);
+        callback(@[err, [NSNull null]]);
+        return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequestError"
+                                                               body:err];
+    }
+    
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    NSString *url = @"https://api.linkedin.com/v1/people/~/picture-urls::(original)";
+    
+    NSDictionary *parameters = @{@"oauth2_access_token":[accessTokenDetails objectForKey:@"accessToken"], @"format": @"json"};
+    [manager GET:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+        callback(@[[NSNull null],responseObject]);
+        return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequest"
+                                                               body:responseObject];
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSString *err = [NSString stringWithFormat:@"Request Error: %@", error.description];
@@ -115,6 +172,24 @@ RCT_EXPORT_METHOD(login:(NSString *)clientId redirectUrl:(NSString *)redirectUrl
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLoginError"
                                                                body:err];
     }];
+    
+}
+
+RCT_EXPORT_METHOD(logout:(RCTResponseSenderBlock)callback)
+{
+    
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    
+    [userDefaults removeObjectForKey:LINKEDIN_TOKEN_KEY];
+    [userDefaults removeObjectForKey:LINKEDIN_EXPIRATION_KEY];
+    [userDefaults removeObjectForKey:LINKEDIN_CREATION_KEY];
+    [userDefaults synchronize];
+    
+    NSString *msg = @"Logged Out";
+    NSLog(@"%@", msg);
+    callback(@[[NSNull null], msg]);
+    return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinLogout"
+                                                           body:msg];
     
 }
 
