@@ -101,7 +101,7 @@ RCT_EXPORT_METHOD(getCredentials:(RCTResponseSenderBlock)callback)
     }];
 }
 
-RCT_EXPORT_METHOD(getProfileImage:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(getProfileImages:(RCTResponseSenderBlock)callback)
 {
     NSDictionary *accessTokenDetails = [self buildAccessTokenDetails];
     if (!accessTokenDetails) {
