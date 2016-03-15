@@ -84,9 +84,12 @@ RCT_EXPORT_METHOD(getCredentials:(RCTResponseSenderBlock)callback)
     
     NSDictionary *parameters = @{@"oauth2_access_token":[accessTokenDetails objectForKey:@"accessToken"], @"format": @"json"};
     [manager GET:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSMutableDictionary * resp = [responseObject mutableCopy];
-        [resp setObject:[accessTokenDetails objectForKey:@"accessToken"] forKey:@"access_token"];
-        [resp setObject:[accessTokenDetails objectForKey:@"expiresOn"] forKey:@"expires_in"];
+        NSDictionary *resp = @{@"accessToken":[accessTokenDetails objectForKey:@"accessToken"],
+                               @"ExpiresOn":[accessTokenDetails objectForKey:@"expiresOn"],
+                               @"email":[responseObject objectForKey:@"emailAddress"],
+                               @"firstName":[responseObject objectForKey:@"firstName"],
+                               @"lastName":[responseObject objectForKey:@"lastName"],
+                               @"id":[responseObject objectForKey:@"id"]};
         NSLog(@"JSON: %@", resp);
         callback(@[[NSNull null],resp]);
         return [self.bridge.eventDispatcher sendDeviceEventWithName:@"linkedinGetRequest"
