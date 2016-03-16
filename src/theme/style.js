@@ -1,21 +1,10 @@
-export default {
-  LILoginMock: {
+import { StyleSheet } from 'react-native';
+
+export default StyleSheet.create({
+  LILMButton: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  LILoginMockButtonContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  LILoginMockButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems:'center',
 
     height: 30,
     width: 175,
@@ -34,21 +23,32 @@ export default {
       width: 0
     }
   },
-  LILoginMockButtonText: {
+  LILMButtonContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems:'center'
+  },
+  LILMIconWrap:{
+    flex:1
+  },
+  LILMIcon: {
+    fontSize:14,
+    color:'white'
+  },
+  LILMTextWrap:{
+    flex:2,
+    alignItems:'center'
+  },
+  LILMText: {
     color: 'white',
     fontWeight: '600',
     fontFamily: 'Helvetica neue',
-    fontSize: 14.2
+    fontSize: 14
   },
-  LILoginMockButtonTextLoggedIn: {
+  LILMTextLoggedIn: {
     marginLeft: 5
   },
-  LILoginMockButtonTextLoggedOut: {
+  LILMTextLoggedOut: {
     marginLeft: 18
-  },
-  LILoginMockLogo: {
-    position: 'absolute',
-    left: 7,
-    top: 7
   }
-}
+});

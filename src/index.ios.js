@@ -3,17 +3,14 @@ import React, {
   View,
   StyleSheet,
   Text,
-  Image,
   TouchableHighlight,
   PropTypes,
   NativeModules,
   DeviceEventEmitter
 } from 'react-native';
 
-import extend from 'extend';
-
 import { login, logout, getCredentials, liEvents} from './util';
-import defaultStyles from './theme/style';
+import styles from './theme/style';
 const Icon = require('react-native-vector-icons/FontAwesome');
 
 export default class LILoginMock extends Component {
@@ -22,13 +19,9 @@ export default class LILoginMock extends Component {
 
     this.willUnmountSoon = false;
 
-    // extending default styles with provided styles.
-    const extendedStyles = extend(true, {}, defaultStyles, this.props.styleOverride);
-
     this.state = {
       credentials: null,
-      subscriptions: [],
-      styles: StyleSheet.create(extendedStyles)
+      subscriptions: []
     };
   }
 
@@ -92,25 +85,38 @@ export default class LILoginMock extends Component {
     });
   }
 
-  render() {
-    const loginText = this.props.loginText || "Log in with Linkedin";
-    const logoutText = this.props.logoutText || "Log out";
-    const text = this.state.credentials ? logoutText : loginText;
-    const styles = this.state.styles;
+  prepareStyle(){
+    const { style ={} } = this.props;
+    const LILMText = style.LILMText || styles.LILMText;
+    const LILMTextLoggedIn = style.LILMTextLoggedIn || styles.LILMTextLoggedIn;
+    const LILMTextLoggedOut = style.LILMTextLoggedOut || styles.LILMTextLoggedOut;
 
+    return {
+      LILMButton: style.LILMButton || styles.LILMButton,
+      LILMButtonContent: style.LILMButtonContent || styles.LILMButtonContent,
+      LILMIconWrap: style.LILMIconWrap || styles.LILMIconWrap,
+      LILMIcon: style.LILMIcon || styles.LILMIcon,
+      LILMTextWrap: style.LILMTextWrap || styles.LILMTextWrap,
+      LILMText: [LILMText, this.state.credentials ? LILMTextLoggedIn : LILMTextLoggedOut],
+    }
+  }
+
+  render() {
+    const { loginText = "Log in with Linkedin", logoutText = "Log out"} = this.props;
+    const text = this.state.credentials ? logoutText : loginText;
+    const { LILMButton, LILMButtonContent, LILMIconWrap, LILMIcon, LILMTextWrap, LILMText} = this.prepareStyle();
     return (
-    <View style={styles.LILoginMock}>
-      <TouchableHighlight
-        style={styles.LILoginMockButtonContainer}
-        onPress={() => { this.onPress(); }}
-      >
-        <View style={styles.LILoginMockButton}>
-          <Icon name="linkedin" size={16}  color="#fff" style={styles.LILoginMockLogo}/>
-          <Text style={[styles.LILoginMockButtonText, this.state.credentials ? styles.LILoginMockButtonTextLoggedIn : styles.LILoginMockButtonTextLoggedOut]}
-                numberOfLines={1}>{text}</Text>
+      <TouchableHighlight style={ LILMButton } onPress={this.onPress.bind(this)}>
+        <View style={LILMButtonContent}>
+          <View style={ LILMIconWrap }>
+            <Icon name="linkedin" style={ LILMIcon }/>
+          </View>
+          <View style={ LILMTextWrap }>
+            <Text style={ LILMText } numberOfLines={1}>{text}</Text>
+          </View>
+          <View style={ LILMIconWrap }></View>
         </View>
       </TouchableHighlight>
-    </View>
     );
   }
 }
