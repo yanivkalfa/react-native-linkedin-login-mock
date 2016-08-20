@@ -25,7 +25,7 @@ export default class LILoginMock extends Component {
     };
   }
 
-  handleLogin(){
+  handleLogin() {
     login(this.props.appDetails).then((data) => {
       if (!this.willUnmountSoon) this.setState({ credentials : data });
     }).catch((err) => {
@@ -33,7 +33,7 @@ export default class LILoginMock extends Component {
     })
   }
 
-  handleLogout(){
+  handleLogout() {
     logout().then((data) => {
       if (!this.willUnmountSoon) this.setState({ credentials : null });
     }).catch((err) => {
@@ -85,7 +85,7 @@ export default class LILoginMock extends Component {
     });
   }
 
-  prepareStyle(){
+  prepareStyle() {
     const { style ={} } = this.props;
     const LILMText = style.LILMText || styles.LILMText;
     const LILMTextLoggedIn = style.LILMTextLoggedIn || styles.LILMTextLoggedIn;
